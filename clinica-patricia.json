@@ -1,0 +1,384 @@
+{
+  "name": "clinica-patricia",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -48,
+        80
+      ],
+      "id": "342dbd31-37c2-4764-9b71-65de531f4953",
+      "name": "When chat message received",
+      "webhookId": "a7c3728b-9995-4e50-bbb3-c9a03268f02e"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        304
+      ],
+      "id": "0256adaa-98ea-4e3d-bfbb-b1445d1b64dc",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "XGt2R2tLJBZ5exR4",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=Você é a Patricia da Clínica Sorriso, uma clínica odontológica.\nVocê atende pacientes pelo WhatsApp.\n\nSuas funções:\n- Informar valores de procedimentos\n- Ajudar a marcar consultas\n\nRegras importantes:\n- Nunca invente preços ou horários. Use sempre as ferramentas disponíveis.\n  Se não tiver a informação, diga que vai verificar.\n- Seja cordial, profissional e direto. Respostas curtas (é WhatsApp).\n- Responda sempre em português.\n- Para marcar consulta, colete: nome do paciente, procedimento desejado\n  e horário de preferência. Confirme os dados antes de marcar.\n- Se pedirem algo fora do seu escopo, ofereça encaminhar para um atendente.\n\nTabela de valores (use exatamente estes; nunca invente):\n- Consulta de avaliação: R$ 25\n- Limpeza (profilaxia): R$ 100\n- Restauração: R$ 150\n- Clareamento: R$ 500\n- Extração: R$ 100\n\nSe perguntarem um procedimento que não está na lista, diga que vai\nverificar com a recepção e não chute valor.\n\nQuando o paciente demonstrar interesse em um procedimento ou em marcar\nconsulta, colete o nome e o procedimento de interesse, e use a ferramenta\nsalvar_lead para registrar telefone, nome e interesse. Não invente dados —\npergunte o que estiver faltando.\n\nAgendamento de consultas:\n- A clínica atende de segunda a sexta, das 9h às 17h.\n- Antes de oferecer um horário, use verificar_horarios para checar o que\njá está ocupado naquele período. Nunca ofereça horário já tomado.\n- Só use marcar_consulta depois de confirmar data, horário e procedimento\n  com o paciente.\n- A data e hora atual é: {{ $now.format('yyyy-MM-dd HH:mm') }} "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        -16
+      ],
+      "id": "31fa31ca-805d-4bb8-9664-981aac2ae89e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        256,
+        304
+      ],
+      "id": "a75bfd7d-f512-4f2c-a025-2947a6c08e60",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "OTPqXJuprlGqETJg",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Salva os dados do paciente na tabela de leads. Use quando tiver o nome e o procedimento de interesse do paciente.",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "leads",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telefone": "99999999999",
+            "nome": "={{ $fromAI('nome', ``, 'string') }}",
+            "interesse": "={{ $fromAI('interesse', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interesse",
+              "displayName": "interesse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "criado_em",
+              "displayName": "criado_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        784,
+        304
+      ],
+      "id": "5e606b67-9131-4df7-8a6e-aa11288e55b5",
+      "name": "salvar_lead",
+      "credentials": {
+        "postgres": {
+          "id": "OTPqXJuprlGqETJg",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Consulta os horários já ocupados na agenda em um período. Use antes de oferecer um horário ao paciente, para não sugerir horário ocupado.",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "gabrielfrr.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "gabrielfrr.dev@gmail.com"
+        },
+        "timeMin": "={{ $fromAI('After', `data e hora inicial do período a verificar, em formato ISO 8601, usando o ano atual`, 'string') }}",
+        "timeMax": "={{ $fromAI('Before', `data e hora final do período a verificar, em formato ISO 8601, usando o ano atual`, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        304
+      ],
+      "id": "fe274f7d-828c-4824-9642-cda11794773e",
+      "name": "verificar_horarios",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "MQnZ24qx8LaOriQF",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Cria o agendamento na agenda. Use SOMENTE depois de verificar que o horário está livre e confirmar os dados com o paciente.",
+        "calendar": {
+          "__rl": true,
+          "value": "gabrielfrr.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "gabrielfrr.dev@gmail.com"
+        },
+        "start": "={{ $fromAI('Start', `data e hora de início da consulta em formato ISO 8601, sempre usando o ano atual, ex: 2026-07-10T09:00:00`, 'string') }}",
+        "end": "={{ $fromAI('End', `data e hora de término da consulta em formato ISO 8601, geralmente 1 hora após o início`, 'string') }}",
+        "additionalFields": {
+          "summary": "={{ $fromAI('Summary', `título no formato: Consulta - nome do paciente - procedimento. Ex: Consulta - Maria Silva - Limpeza`, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        304
+      ],
+      "id": "49e97ec7-3c7c-4c00-96ad-be75c2b5b07f",
+      "name": "marcar_consulta",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "MQnZ24qx8LaOriQF",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -112
+      ],
+      "id": "a5f3b7d2-1465-4beb-9d8b-ce3c8341c787",
+      "name": "WhatsApp Trigger",
+      "webhookId": "718552be-063f-4a02-b2a0-cbe482a06169",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "PWmiqW6C5I6jWV5k",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1077629468775034",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        -16
+      ],
+      "id": "9f9c3a26-e6b9-4578-95d3-af67ef531221",
+      "name": "Send message",
+      "webhookId": "5f1ca237-3083-460f-a12b-ad78369d0d16",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "O656ZwjxF5cUCf3T",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salvar_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar_horarios": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "marcar_consulta": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "7feb0f1c-60f1-48b2-995b-08ca640e5566",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7eae5c26cd162da27fac1b0fee9dbbab155d465912dc34daa2635d1dc3ce50a"
+  },
+  "id": "q6r7pG8RMQOqDwZo",
+  "tags": []
+}
