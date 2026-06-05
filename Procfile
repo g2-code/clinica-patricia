@@ -1,1 +1,1 @@
-web: n8n start --skip-db-migrations
+web: n8n start --tunnel
